@@ -1431,12 +1431,17 @@ class Phi3VModel(Phi3VPreTrainedModel):
                 inputs_embeds = self.vision_embed_tokens(input_ids, pixel_values=pixel_values, image_sizes=image_sizes)
             else:
                 dummy_pixel_value = torch.zeros(1, 5, 3, 336, 336).to(input_ids.device)
+                dummy_sizes = torch.tensor([[336, 336]]).to(input_ids.device)
                 num_images, num_crops, c, h, w = dummy_pixel_value.shape
-                self.vision_embed_tokens.get_img_features(dummy_pixel_value.flatten(0, 1)).reshape(
+                feats = self.vision_embed_tokens.get_img_features(dummy_pixel_value.flatten(0, 1)).reshape(
                     num_images, num_crops, -1, self.vision_embed_tokens.image_dim_out
                 )
-                self.vision_embed_tokens.img_projection(torch.zeros(1, 1921, 4096, device=input_ids.device, dtype=self.vision_embed_tokens.img_processor.dtype))
+                hd = self.vision_embed_tokens.hd_feature_transform(feats, dummy_sizes)
+                proj = self.vision_embed_tokens.img_projection(hd)
+
                 inputs_embeds = self.embed_tokens(input_ids)
+
+                inputs_embeds = inputs_embeds + (proj.sum() * 0.0)
 
         if attention_mask is not None and self._attn_implementation == "flash_attention_2" and use_cache:
             is_padding_right = attention_mask[:, -1].sum().item() != batch_size
