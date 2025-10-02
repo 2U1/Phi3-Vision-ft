@@ -1436,9 +1436,7 @@ class Phi3VModel(Phi3VPreTrainedModel):
                 feats = self.vision_embed_tokens.get_img_features(dummy_pixel_value.flatten(0, 1)).reshape(
                     num_images, num_crops, -1, self.vision_embed_tokens.image_dim_out
                 )
-                hd = self.vision_embed_tokens.hd_feature_transform(feats, dummy_sizes)
-                proj = self.vision_embed_tokens.img_projection(hd)
-
+                proj = self.vision_embed_tokens.hd_feature_transform(feats, dummy_sizes)
                 inputs_embeds = self.embed_tokens(input_ids)
 
                 inputs_embeds = inputs_embeds + (proj.sum() * 0.0)
